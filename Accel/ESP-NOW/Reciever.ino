@@ -18,7 +18,6 @@ typedef struct dataPacket {
   float AccX;
   float AccY;
   float AccZ;
-  float time;
 } dataPacket;
 
 //Create a struct_message called myData
@@ -29,17 +28,14 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&packet, incomingData, sizeof(dataPacket));
   // Serial.print("Bytes received: ");
   // Serial.print(len);
-  Serial.print("x:");
+  // Serial.print("x:");
   Serial.print(packet.AccX);
   Serial.print(",");
-  Serial.print("y:");
+  // Serial.print("y:");
   Serial.print(packet.AccY);
   Serial.print(",");
-  Serial.print("z:");
+  // Serial.print("z:");
   Serial.print(packet.AccZ);
-  Serial.print(",");
-  Serial.print("T:");
-  Serial.print(packet.time);
   Serial.println();
 }
  
