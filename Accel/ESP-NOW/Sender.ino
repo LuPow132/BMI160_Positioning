@@ -8,8 +8,6 @@
 BMI160 IMU;    
 calData calib = { 0 }; 
 AccelData accelData;    //Sensor data
-unsigned long currentTime = millis();
-unsigned long previoustTime = millis();
 
 double AccX, AccY, AccZ;
 
@@ -19,7 +17,6 @@ typedef struct dataPacket {
   float AccX;
   float AccY;
   float AccZ;
-  float time;
 } dataPacket;
 
 dataPacket packet;
@@ -73,21 +70,18 @@ void setup() {
     }
   }
   
-  delay(3000);
+  delay(1000);
 }
 
 void loop() {
 
   // put your main code here, to run repeatedly:
-  previoustTime = currentTime;
-  currentTime = millis();
   IMU.update();
   IMU.getAccel(&accelData);
 
   packet.AccX = accelData.accelX;
   packet.AccY = accelData.accelY;
   packet.AccZ = accelData.accelZ;
-  packet.time = currentTime - previoustTime;
 
   esp_err_t result = esp_now_send(0, (uint8_t *) &packet, sizeof(dataPacket));
    
@@ -97,21 +91,4 @@ void loop() {
   else {
     Serial.println("Error sending the data");
   }
-  
-
-
-  // Serial.print("ET:");
-  // Serial.print(packet.time);
-  // Serial.print(",");
-  // Serial.print("AccX:");
-  // Serial.print(packet.AccX);
-  // Serial.print(",");
-  // Serial.print("AccY:");
-  // Serial.print(packet.AccY);
-  // Serial.print(",");  
-  // Serial.print("AccZ:");
-  // Serial.print(packet.AccZ);
-  // Serial.println();
-
-  delay(10);
 }
