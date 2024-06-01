@@ -18,6 +18,9 @@ typedef struct dataPacket {
   float AccX;
   float AccY;
   float AccZ;
+  float GyroX;
+  float GyroY;
+  float GyroZ;
 } dataPacket;
 
 //Create a struct_message called myData
@@ -36,6 +39,13 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   Serial.print(",");
   // Serial.print("z:");
   Serial.print(packet.AccZ);
+  Serial.print(",");
+  Serial.print(packet.GyroX);
+  Serial.print(",");
+  Serial.print(packet.GyroY);
+  Serial.print(",");
+  Serial.print(packet.GyroZ);
+
   Serial.println();
 }
  
