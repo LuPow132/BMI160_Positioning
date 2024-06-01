@@ -8,6 +8,7 @@
 BMI160 IMU;    
 calData calib = { 0 }; 
 AccelData accelData;    //Sensor data
+GyroData gyroData;
 
 double AccX, AccY, AccZ;
 
@@ -17,6 +18,9 @@ typedef struct dataPacket {
   float AccX;
   float AccY;
   float AccZ;
+  float GyroX;
+  float GyroY;
+  float GyroZ;
 } dataPacket;
 
 dataPacket packet;
@@ -77,11 +81,29 @@ void loop() {
 
   // put your main code here, to run repeatedly:
   IMU.update();
+  IMU.getGyro(&gyroData);
   IMU.getAccel(&accelData);
 
   packet.AccX = accelData.accelX;
   packet.AccY = accelData.accelY;
   packet.AccZ = accelData.accelZ;
+  packet.GyroX = gyroData.gyroX;
+  packet.GyroY = gyroData.gyroY;
+  packet.GyroZ = gyroData.gyroZ;
+  
+  Serial.print(packet.AccX);
+  Serial.print(",");
+  // Serial.print("y:");
+  Serial.print(packet.AccY);
+  Serial.print(",");
+  // Serial.print("z:");
+  Serial.print(packet.AccZ);
+  Serial.print(",");
+  Serial.print(packet.GyroX);
+  Serial.print(",");
+  Serial.print(packet.GyroY);
+  Serial.print(",");
+  Serial.print(packet.GyroZ);
 
   esp_err_t result = esp_now_send(0, (uint8_t *) &packet, sizeof(dataPacket));
    
