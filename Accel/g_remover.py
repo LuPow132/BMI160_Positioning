@@ -3,15 +3,15 @@ import time
 import math
 
 # Constants for the complementary filter
-alpha = 0.98
-dt = 0.05  # Time step (100 Hz)
+alpha = 0.80
+dt = 0.02  # Time step (100 Hz)
 
 # Initialize variables for angles
 roll = 0.0
 pitch = 0.0
 yaw = 0.0
 
-g = 1
+g = 1  # Gravity constant (m/s^2)
 
 # Serial update function
 def update_variable():
@@ -53,14 +53,11 @@ def update_variable():
                     roll = alpha * gyro_roll + (1 - alpha) * acc_roll
                     yaw = gyro_yaw  # Yaw is typically not corrected with accelerometer data
 
-                    # print(f'AccX:{AccX}\tAccY:{AccY}\tAccZ:{AccZ}\tGyroX:{GyroX}\tGyroY:{GyroY}\tGyroZ:{GyroZ}\tRoll:{round(roll,2)}\tPitch:{round(pitch,2)}\tYaw:{round(yaw,2)}')
                     remove_g()
                 except Exception as e:
                     print("Error occurred: ", e)
     except KeyboardInterrupt:
         print("Exiting the program.")
-    except Exception as e:
-        print("Error occurred while trying to connect to Serial: ", e)
     finally:
         ser.close()
 
@@ -72,21 +69,24 @@ def acc_invert(acc):
 
 def remove_g():
     global AccX, AccY, AccZ
-    global GyroX, GyroY, GyroZ
-    global currentTime, previousTime, ET
-    global roll, pitch, yaw
-    global AccX_noG,AccY_noG,AccZ_noG
+    global roll, pitch
 
-    AccX_noG = abs((roll)/90 *g ) * acc_invert(AccX) + AccX
-    AccY_noG = abs((pitch)/90 *g ) * acc_invert(AccY) + AccY
-    AccZ_noG = abs((yaw)/90 *g ) * acc_invert(AccZ) + AccZ
+    # Calculate the gravity components on each axis
+    gX = g * math.sin(math.radians(roll))
+    gY = -g * math.sin(math.radians(pitch))
+    gZ = g * math.cos(math.radians(roll)) * math.cos(math.radians(pitch))
 
-    print(f'RawX:{AccX}\tRawY:{AccY}\tRawZ:{AccZ}\tRoll:{round(roll,2)}\tPitch:{round(pitch,2)}\tYaw:{round(yaw,2)}\tAX:{round(AccX_noG,2)}\tAY:{round(AccY_noG,2)}\tAZ:{round(AccZ_noG,2)}')
+    # Remove the gravity component from the accelerometer data
+    AccX_noG = AccX + gX
+    AccY_noG = AccY + gY
+    AccZ_noG = AccZ - gZ
 
+    # Print the accelerometer data without gravity
+    print(f'AccX_noG: {AccX_noG:.1f}\tAccY_noG: {AccY_noG:.1f}\tAccZ_noG: {AccZ_noG:.1f} \t{roll:.2f}\t{pitch:.2f}\t{yaw:.2f}\t{gX:.2f}\t{gY:.2f}\t{gZ:.2f}\t{ET}')
 
 if __name__ == '__main__':
     # Open the serial port
-    ser = serial.Serial('COM15', 115200, timeout=1)
+    ser = serial.Serial('COM13', 115200, timeout=1)
     
     # Allow some time for the serial connection to initialize
     time.sleep(1)
@@ -94,4 +94,3 @@ if __name__ == '__main__':
 
     while True:
         update_variable()
-
