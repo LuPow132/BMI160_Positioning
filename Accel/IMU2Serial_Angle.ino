@@ -12,7 +12,7 @@ pitch = 0.0
 yaw = 0.0
 
 # Serial update function
-def update_serial():
+def update_variable():
     global AccX, AccY, AccZ
     global GyroX, GyroY, GyroZ
     global currentTime, previousTime, ET
@@ -56,16 +56,22 @@ def update_serial():
                     print("Error occurred: ", e)
     except KeyboardInterrupt:
         print("Exiting the program.")
+    except Exception as e:
+        print("Error occurred while trying to connect to Serial: ", e)
     finally:
         ser.close()
 
+def remove_g():
+    pass
+
 if __name__ == '__main__':
     # Open the serial port
-    ser = serial.Serial('COM13', 115200, timeout=1)
+    ser = serial.Serial('COM15', 115200, timeout=1)
     
     # Allow some time for the serial connection to initialize
     time.sleep(1)
     currentTime = round(time.time() * 1000)
 
     while True:
-        update_serial()
+        update_variable()
+
