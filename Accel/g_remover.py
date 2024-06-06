@@ -1,6 +1,7 @@
 import serial
 import time
 import math
+import sys,subprocess
 
 # Constants for the complementary filter
 alpha = 0.80
@@ -67,6 +68,14 @@ def acc_invert(acc):
     else:
         return 1
 
+def clear_screen():
+    operating_system = sys.platform
+
+    if operating_system == "win32":
+        subprocess.run('cls', shell=True)
+    elif operating_system == "linux" or operating_system == "darwin":
+        subprocess.run('clear', shell=True)
+
 def remove_g():
     global AccX, AccY, AccZ
     global roll, pitch
@@ -82,7 +91,8 @@ def remove_g():
     AccZ_noG = AccZ - gZ
 
     # Print the accelerometer data without gravity
-    print(f'AccX_noG: {AccX_noG:.1f}\tAccY_noG: {AccY_noG:.1f}\tAccZ_noG: {AccZ_noG:.1f} \t{roll:.2f}\t{pitch:.2f}\t{yaw:.2f}\t{gX:.2f}\t{gY:.2f}\t{gZ:.2f}\t{ET}')
+    print(f'Acc_noG:\t{AccX_noG:.1f}\t{AccY_noG:.1f}\t{AccZ_noG:.1f}\tRoll/Pitch/Yaw\t{roll:.2f}\t{pitch:.2f}\t{yaw:.2f}\tRawAcc\t\t{gX:.2f}\t{gY:.2f}\t{gZ:.2f}\tET:{ET}', end="\r")
+    # subprocess.run('cls', shell=True)
 
 if __name__ == '__main__':
     # Open the serial port
