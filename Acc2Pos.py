@@ -1,29 +1,28 @@
 import serial
 import time
 import math
-import sys
-import subprocess
+import sys,subprocess
+import keyboard
 
 # Constants for the complementary filter
 alpha = 0.75
-dt = 0.02  # Time step (50 Hz)
-velocity_threshold = 0.05  # Threshold for zero-velocity update (m/s^2)
+dt = 0.02  # Time step (100 Hz)
 
 # Initialize variables for angles
 roll = 0.0
 pitch = 0.0
 yaw = 0.0
 
-# Initialize velocity and distance variables
+g_force = 9.8
+g_unit = 1  # Gravity constant (m/s^2)
+
 VX = 0.0
 VY = 0.0
 VZ = 0.0
+
 DX = 0.0
 DY = 0.0
 DZ = 0.0
-
-g_force = 9.8
-g_unit = 1  # Gravity constant (m/s^2)
 
 # Serial update function
 def update_variable():
@@ -31,6 +30,8 @@ def update_variable():
     global GyroX, GyroY, GyroZ
     global currentTime, previousTime, ET
     global roll, pitch, yaw
+    global VX,VY,VZ
+    global DX,DY,DZ         
 
     try:
         while True:
@@ -52,7 +53,8 @@ def update_variable():
                     GyroZ = float(dataStreamingArray[5])
 
                     # Calculate angles from accelerometer data
-                    dt = ET / 1000
+
+                    dt = ET/1000
 
                     acc_pitch = math.atan2(AccY, AccZ) * 180 / math.pi
                     acc_roll = math.atan2(-AccX, math.sqrt(AccY**2 + AccZ**2)) * 180 / math.pi
@@ -69,6 +71,16 @@ def update_variable():
 
                     remove_g()
                     calculate_distance()
+                    if(keyboard.is_pressed("space")):
+                        VX = 0.0
+                        VY = 0.0
+                        VZ = 0.0
+
+                        DX = 0.0
+                        DY = 0.0
+                        DZ = 0.0
+                        clear_screen()
+                        print("RESET")
                 except Exception as e:
                     print("Error occurred: ", e)
     except KeyboardInterrupt:
@@ -93,7 +105,7 @@ def clear_screen():
 def remove_g():
     global AccX, AccY, AccZ
     global roll, pitch
-    global AccX_noG, AccY_noG, AccZ_noG
+    global AccX_noG,AccY_noG,AccZ_noG
 
     # Calculate the gravity components on each axis
     gX = g_unit * math.sin(math.radians(roll))
@@ -102,44 +114,42 @@ def remove_g():
 
     # Remove the gravity component from the accelerometer data
     AccX_noG = round((AccX + gX) * g_force, 1)
-    AccY_noG = round((AccY + gY) * g_force, 1)
-    AccZ_noG = round((AccZ - gZ) * g_force, 1)
+    AccY_noG = round((AccY + gY) * g_force,1)
+    AccZ_noG = round((AccZ - gZ) * g_force,1)
 
     # Print the accelerometer data without gravity
     # print(f'Acc_noG:\t{AccX_noG}\t{AccY_noG}\t{AccZ_noG}\tRoll/Pitch/Yaw\t{roll:.2f}\t{pitch:.2f}\t{yaw:.2f}\tRawAcc\t\t{gX:.2f}\t{gY:.2f}\t{gZ:.2f}\tET:{ET}', end="\r")
+    # subprocess.run('cls', shell=True)
 
 def calculate_distance():
-    global VX, VY, VZ
-    global DX, DY, DZ
-
-    # Low-pass filter for acceleration to reduce noise
-    AccX_filtered = alpha * (AccX_noG / 100) + (1 - alpha) * (VX / dt)
-    AccY_filtered = alpha * (AccY_noG / 100) + (1 - alpha) * (VY / dt)
-    AccZ_filtered = alpha * (AccZ_noG / 100) + (1 - alpha) * (VZ / dt)
-
-    # Zero-velocity update (ZUPT)
-    if abs(AccX_filtered) < velocity_threshold:
+    global VX,VY,VZ
+    global DX,DY,DZ
+    if abs(AccX_noG) < 0.01:
         VX = 0
+    elif abs(AccX_noG) < 0.05:
+        VX = 0.2
     else:
-        VX = VX + AccX_filtered * dt
+        VX = round(VX + AccX_noG * dt * 1000)
 
-    if abs(AccY_filtered) < velocity_threshold:
+    if abs(AccY_noG) < 0.01:
         VY = 0
+    elif abs(AccY_noG) < 0.05:
+        VY = 0.2
     else:
-        VY = VY + AccY_filtered * dt
+        VY = round(VY + AccY_noG * dt * 1000)
 
-    if abs(AccZ_filtered) < velocity_threshold:
+    if abs(AccZ_noG) < 0.01:         
         VZ = 0
+    elif abs(AccZ_noG) < 0.05:
+        VZ = 0.2   
     else:
-        VZ = VZ + AccZ_filtered * dt
+        VZ = round(VZ + AccZ_noG * dt * 1000)    
 
-    # Integrate velocity to get distance
-    DX += VX * dt
-    DY += VY * dt
-    DZ += VZ * dt
+    DX += round(round(VX * dt) / 100,2)
+    DY += round(round(VY * dt) / 100,2)
+    DZ += round(round(VZ * dt) / 100,2)
 
-    print(f'Acc_noG:\t{AccX_noG}\t{AccY_noG}\t{AccZ_noG}\tVX:{VX:.2f}\tVY:{VY:.2f}\tVZ:{VZ:.2f}\tDX:{DX:.2f}\tDY:{DY:.2f}\tDZ:{DZ:.2f}')
-
+    print(f'\t{AccX_noG}\t{AccY_noG}\t{AccZ_noG}\t{VX}\t{VY}\t{VZ}\t{DX}\t{DY}\t{DZ}\t{dt}\t')
 if __name__ == '__main__':
     # Open the serial port
     ser = serial.Serial('COM13', 115200, timeout=1)
