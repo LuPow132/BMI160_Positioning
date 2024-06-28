@@ -6,7 +6,7 @@ import keyboard
 import socket
 
 # Constants for the complementary filter
-alpha = 0.75
+alpha = 0.8
 dt = 0  # Time step (100 Hz)
 
 # Initialize variables for angles
@@ -74,7 +74,7 @@ def update_variable():
                     calculate_distance()
 
                     # Send data to Unity
-                    send_data_to_unity(DX, DY, DZ)
+                    send_data_to_unity(DX, DY, DZ, roll, pitch, yaw)
 
                     if keyboard.is_pressed("space"):
                         VX = 0.0
@@ -109,38 +109,35 @@ def remove_g():
     global roll, pitch
     global AccX_noG, AccY_noG, AccZ_noG
 
+    global AccX, AccY, AccZ
+    global roll, pitch
+
     # Calculate the gravity components on each axis
     gX = g_unit * math.sin(math.radians(roll))
     gY = -g_unit * math.sin(math.radians(pitch))
     gZ = g_unit * math.cos(math.radians(roll)) * math.cos(math.radians(pitch))
 
     # Remove the gravity component from the accelerometer data
-    AccX_noG = round((AccX + gX) * g_force, 1)
-    AccY_noG = round((AccY + gY) * g_force, 1)
-    AccZ_noG = round((AccZ - gZ) * g_force, 1)
+    AccX_noG = (AccX + gX) * g_force
+    AccY_noG = (AccY + gY) * g_force
+    AccZ_noG = (AccZ - gZ) * g_force
 
 def calculate_distance():
     global VX, VY, VZ
     global DX, DY, DZ
 
-    if abs(AccX_noG) < 0.03:
+    if abs(AccX_noG) < 0.8:
         VX = 0
-    elif abs(AccX_noG) < 0.05:
-        VX = 0.2
     else:
         VX = round(VX + AccX_noG * dt * 1000)
 
-    if abs(AccY_noG) < 0.03:
+    if abs(AccY_noG) < 0.8:
         VY = 0
-    elif abs(AccY_noG) < 0.05:
-        VY = 0.2
     else:
         VY = round(VY + AccY_noG * dt * 1000)
 
-    if abs(AccZ_noG) < 0.03:
+    if abs(AccZ_noG) < 0.8:
         VZ = 0
-    elif abs(AccZ_noG) < 0.05:
-        VZ = 0.2
     else:
         VZ = round(VZ + AccZ_noG * dt * 1000)
 
@@ -148,11 +145,11 @@ def calculate_distance():
     DY += round(round(VY * dt) / 100, 2)
     DZ += round(round(VZ * dt) / 100, 2)
 
-    print(f'\t{AccX_noG}\t{AccY_noG}\t{AccZ_noG}\t{VX}\t{VY}\t{VZ}\t{DX:.2f}\t{DY:.2f}\t{DZ:.2f}\t{dt}')
+    print(f'\t{AccX_noG:.2f}\t{AccY_noG:.2f}\t{AccZ_noG:.2f}\t{VX}\t{VY}\t{VZ}\t{roll:.2f}\t{pitch:.2f}\t{yaw:.2f}\t{DX:.2f}\t{DY:.2f}\t{DZ:.2f}\t{dt}')
 
-def send_data_to_unity(dx, dy, dz):
+def send_data_to_unity(dx, dy, dz, roll, pitch, yaw):
     try:
-        message = f"{dx},{dy},{dz}"
+        message = f"{dx},{dy},{dz},{roll},{pitch},{yaw}"
         client_socket.sendall(message.encode('utf-8'))
     except Exception as e:
         print(f"Failed to send data: {e}")
