@@ -52,41 +52,50 @@ public class MyListener : MonoBehaviour
         if (!string.IsNullOrEmpty(dataReceived))
         {
             // Convert the received string of data to the format we are using
-            Vector3 position = ParseData(dataReceived);
+            Vector3 position;
+            Vector3 rotation;
+            ParseData(dataReceived, out position, out rotation);
             nwStream.Write(buffer, 0, bytesRead);
-            // Set the position of the object
-            UpdatePosition(position);
+            // Set the position and rotation of the object
+            UpdateTransform(position, rotation);
         }
     }
 
     // Use-case specific function, need to re-write this to interpret whatever data is being sent
-    public static Vector3 ParseData(string dataString)
+    public static void ParseData(string dataString, out Vector3 position, out Vector3 rotation)
     {
         // Split the elements into an array
         string[] stringArray = dataString.Split(',');
 
-        // Store as a Vector3
-        Vector3 result = new Vector3(
+        // Store position as a Vector3
+        position = new Vector3(
             float.Parse(stringArray[0]),
             float.Parse(stringArray[2]),
             float.Parse(stringArray[1]));
 
-        return result;
+        // Store rotation as a Vector3
+        rotation = new Vector3(
+            float.Parse(stringArray[3]),
+            float.Parse(stringArray[5]),
+            float.Parse(stringArray[4]));
     }
 
-    void UpdatePosition(Vector3 newPosition)
+    void UpdateTransform(Vector3 newPosition, Vector3 newRotation)
     {
         // Set this object's position in the scene according to the position received
         position = newPosition;
+        rotation = newRotation;
     }
 
     // Position is the data being received in this example
     Vector3 position = Vector3.zero;
+    Vector3 rotation = Vector3.zero;
 
     void Update()
     {
         // Update the transform's position on the main thread
         transform.position = position;
+        transform.eulerAngles = rotation;
     }
 
     void OnApplicationQuit()
